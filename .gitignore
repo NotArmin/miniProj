@@ -1,0 +1,20 @@
+# Ignore build artifacts
+*.o
+*.elf
+*.bin
+*.txt
+
+# Ignore temporary files
+*.swp
+*.swo
+*.bak
+*.tmp
+*.log
+
+# Ignore editor-specific files
+.vscode/
+.idea/
+*.code-workspace
+
+# Ignore compiled output
+/build/
