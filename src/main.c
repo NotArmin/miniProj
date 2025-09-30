@@ -7,6 +7,11 @@
 
 /* Below functions are external and found in other files. */
 
+#include "dtekv-lib.h"
+#include "device_map.h"
+#include "image_processing.h"
+#include "vga.h"
+
 
 extern void print(const char*);
 extern void printc(char);
