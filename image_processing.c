@@ -70,6 +70,33 @@ void image_draw(void) {
     VGA_DMA_BUFFER = (uint32_t)img_buffer;
     VGA_DMA_RESOLUTION = (img_height << 16) | img_width; // Y | X
 
+    /*from PIL import Image
+
+    # Load sprite (original size, no resize here, but you can resize if needed)
+    img = Image.open("background.bmp").convert("RGB")
+    width, height = img.size  # e.g., 100x53
+
+    with open("background.h", "w") as f:
+
+        f.write("const unsigned char tool_open[RES_Y][RES_X] = {\n")
+
+        for y in range(height):
+            row = []
+            for x in range(width):
+                r, g, b = img.getpixel((x, y))
+                # Skip transparent color check here (we'll handle in C)
+                r3 = r >> 5
+                g3 = g >> 5
+                b2 = b >> 6
+                pixel = (r3 << 5) | (g3 << 2) | b2
+                row.append(str(pixel))
+            f.write("    {" + ", ".join(row) + "},\n")
+
+        f.write("};\n\n")
+        f.write("#endif // smoke_H\n")
+
+    print("Header file created!") */
+
     // Enable DMA (bit 2 = EN in your spec)
     VGA_DMA_STATUS |= (1 << 2);
 }

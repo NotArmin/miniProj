@@ -146,7 +146,5 @@ int main() {
   vga_init();
   uint32_t test_img[320*240];
   image_load(test_img,320,240);
-  image_draw;
-  
-    
+  image_draw();
 }
