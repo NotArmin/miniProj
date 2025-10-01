@@ -5,6 +5,8 @@
 
 void image_load(const uint32_t *data, uint32_t width, uint32_t height);
 void image_grayscale(void);
+void image_invert(void);
+void image_mirror(void);
 void image_draw(void);
 void image_swap_buffers(void);
 
