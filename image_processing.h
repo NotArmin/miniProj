@@ -1,4 +1,4 @@
-#ifndef IMAGE_PROCESSING_H
+/*#ifndef IMAGE_PROCESSING_H
 #define IMAGE_PROCESSING_H
 
 #include <stdint.h>
@@ -11,3 +11,4 @@ void image_draw(void);
 void image_swap_buffers(void);
 
 #endif // IMAGE_PROCESSING_H
+*/

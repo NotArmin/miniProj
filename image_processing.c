@@ -1,23 +1,22 @@
-#include "image_processing.h"
-#include "device_map.h"
+/*#include "image_processing.h"
 #include "vga.h"
-#include "sdram.h"
 #include <stdint.h>
 
 static uint32_t img_width;
 static uint32_t img_height;
-static uint32_t *img_buffer;
+
+static volatile uint8_t *img_buffer;
 
 void image_load(const uint32_t *data, uint32_t width, uint32_t height) {
     img_width = width;
     img_height = height;
-    img_buffer = (uint32_t *)SDRAM_BASE_ADDR; // Store at SDRAM base for simplicity
+    img_buffer = (uint8_t *)SDRAM_BASE_ADDR; // Store at SDRAM base for simplicity
 
     for (uint32_t i = 0; i < width * height; i++) {
         uint32_t pixel = data[i];
 
         uint8_t r = (pixel >> 16) & 0xFF >> 5; // Scale to 3-bit
-        uint8_t g = (pixel >> 8) & 0xFF >> 5; // Scale to 3-bit
+        uint8_t g = (pixel >> 8) & 0xFF >> 6; // Scale to 2-bit
         uint8_t b = pixel & 0xFF >> 6; // Scale to 2-bit
 
         img_buffer[i] = (r << 5) | (g << 2) | (b << 0); // RGB332 format
@@ -98,10 +97,12 @@ void image_draw(void) {
     print("Header file created!") */
 
     // Enable DMA (bit 2 = EN in your spec)
-    VGA_DMA_STATUS |= (1 << 2);
-}
+    //VGA_DMA_STATUS |= (1 << 2);
+//}
 
-
+/*
 void image_swap_buffers(void) {
     vga_swap_buffers();
 }
+
+*/

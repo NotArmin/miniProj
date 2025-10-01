@@ -8,8 +8,7 @@
 /* Below functions are external and found in other files. */
 
 #include "dtekv-lib.h"
-#include "device_map.h"
-#include "image_processing.h"
+#include "background.h"
 #include "vga.h"
 
 
@@ -140,11 +139,6 @@ void labinit(void)
 
 }
 
-/* Your code goes into main as well as any needed functions. */
-// FOR ASSIGNMENT 3
-int main() {
-  vga_init();
-  uint32_t test_img[320*240];
-  image_load(test_img,320,240);
-  image_draw();
+int main(void) {
+    vga_show_background();
 }

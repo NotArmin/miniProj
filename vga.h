@@ -1,18 +1,18 @@
 #ifndef VGA_H
 #define VGA_H
 
-#include <stdint.h>
-#include "device_map.h"
+#define VGA_BASE   0x08000000
+#define VGA_CTRL   0x04000100
+#define RES_X      320
+#define RES_Y      240
 
-// DMA registers
-#define VGA_DMA_BUFFER      (*(volatile uint32_t *)VGA_DMA_BUFFER_ADDR)
-#define VGA_DMA_BACKBUFFER  (*(volatile uint32_t *)VGA_DMA_BACKBUFFER_ADDR)
-#define VGA_DMA_RESOLUTION  (*(volatile uint32_t *)VGA_DMA_RESOLUTION_ADDR)
-#define VGA_DMA_STATUS      (*(volatile uint32_t *)VGA_DMA_STATUS_ADDR)
+extern volatile unsigned char * const BUF0;
+extern volatile unsigned char * const BUF1;
+extern volatile unsigned int  * const VGA_CTRL_PTR;
 
-// VGA functions
 void vga_init(void);
-void vga_draw_pixel(uint32_t x, uint32_t y, uint32_t color);
 void vga_swap_buffers(void);
+void vga_show_background(void);
+void draw_background(volatile unsigned char *vram);
 
 #endif // VGA_H

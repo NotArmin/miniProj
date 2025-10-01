@@ -1,12 +1,6 @@
 #ifndef DTEKV_LIB_H
 #define DTEKV_LIB_H
 
-#include "device_map.h"
-#include "led.h"
-#include "switch.h"
-#include "timer.h"
-#include "vga.h"
-#include "sdram.h"
 
 // Utility functions
 void printc(char);
