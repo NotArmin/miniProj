@@ -9,7 +9,7 @@ void printc(char s)
     *JTAG_UART = s;
 }
 
-void print(char *s)
+void print(const char *s)
 {  
   while (*s != '\0') {    
       printc(*s);
