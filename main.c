@@ -151,48 +151,49 @@ void delay_loop(volatile int n) {
 }
 
 int main(void) {
-    vga_init();
+  
+  vga_init();
 
-    // draw original Bliss first
-    draw_background(BUF0);
-    draw_background(BUF1);
-    *(VGA_CTRL_PTR + 1) = (unsigned int) BUF0;
-    *(VGA_CTRL_PTR + 0) = 0;
+  // draw original Bliss first
+  draw_background(BUF0);
+  draw_background(BUF1);
+  *(VGA_CTRL_PTR + 1) = (unsigned int) BUF0;
+  *(VGA_CTRL_PTR + 0) = 0;
 
-    delay_loop(500000);
+  delay_loop(10000000);
 
-    // 1) invert
-    ip_invert(Bliss, BUF0);
-    vga_swap_buffers();
-    delay_loop(500000);
+  // 1) invert
+  ip_invert(Bliss, BUF0);
+  vga_swap_buffers();
+  delay_loop(10000000);
 
-    // 2) black & white threshold 128
-    ip_blackwhite(Bliss, BUF0, 128);
-    vga_swap_buffers();
-    delay_loop(500000);
+  // 2) black & white threshold 128
+  ip_blackwhite(Bliss, BUF0, 128);
+  vga_swap_buffers();
+  delay_loop(10000000);
 
-    // 3) mirror
-    ip_mirror(Bliss, BUF0);
-    vga_swap_buffers();
-    delay_loop(500000);
+  // 3) mirror
+  ip_mirror(Bliss, BUF0);
+  vga_swap_buffers();
+  delay_loop(10000000);
 
-    // 4) sobel
-    ip_sobel(Bliss, BUF0);
-    vga_swap_buffers();
-    delay_loop(500000);
+  // 4) sobel
+  ip_sobel(Bliss, BUF0);
+  vga_swap_buffers();
+  delay_loop(10000000);
 
-    // 5) sharpen
-    ip_sharpen3x3(Bliss, BUF0);
-    vga_swap_buffers();
-    delay_loop(500000);
+  // 5) sharpen
+  ip_sharpen3x3(Bliss, BUF0);
+  vga_swap_buffers();
+  delay_loop(10000000);
 
-    // 6) blur
-    ip_blur3x3(Bliss, BUF0);
-    vga_swap_buffers();
-    delay_loop(500000);
+  // 6) blur
+  ip_blur3x3(Bliss, BUF0);
+  vga_swap_buffers();
+  delay_loop(10000000);
 
-    // loop forever (or add button logic)
-    while (1) {
-        delay_loop(1000000);
-    }
+  // loop forever (or add button logic)
+  while (1) {
+    delay_loop(1000000);
+  }
 }
