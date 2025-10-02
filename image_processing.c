@@ -22,7 +22,7 @@ static inline void dst_write(volatile unsigned char *dst, int y, int x, unsigned
     dst[y * RES_X + x] = v;
 }
 
-/* 1) Invert: simple */
+/* 1) Invert: */
 void ip_invert(const unsigned char src[RES_Y][RES_X], volatile unsigned char *dst) {
     if (!dst) return;
     for (int y = 0; y < RES_Y; ++y) {
@@ -104,7 +104,6 @@ void ip_sobel(const unsigned char src[RES_Y][RES_X], volatile unsigned char *dst
             int p01 = pixel_at(src, y - 1, x    );
             int p02 = pixel_at(src, y - 1, x + 1);
             int p10 = pixel_at(src, y    , x - 1);
-            int p11 = pixel_at(src, y    , x    );
             int p12 = pixel_at(src, y    , x + 1);
             int p20 = pixel_at(src, y + 1, x - 1);
             int p21 = pixel_at(src, y + 1, x    );

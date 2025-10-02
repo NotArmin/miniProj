@@ -144,7 +144,7 @@ extern volatile unsigned char * const BUF0;
 extern volatile unsigned char * const BUF1;
 extern volatile unsigned int  * const VGA_CTRL_PTR;
 
-void delay(volatile int n) {
+void delay_loop(volatile int n) {
     for (volatile int i = 0; i < n; i++) {
         asm volatile ("nop");
     }
