@@ -1,108 +1,123 @@
-/*#include "image_processing.h"
-#include "vga.h"
+#include "image_processing.h"
 #include <stdint.h>
 
-static uint32_t img_width;
-static uint32_t img_height;
-
-static volatile uint8_t *img_buffer;
-
-void image_load(const uint32_t *data, uint32_t width, uint32_t height) {
-    img_width = width;
-    img_height = height;
-    img_buffer = (uint8_t *)SDRAM_BASE_ADDR; // Store at SDRAM base for simplicity
-
-    for (uint32_t i = 0; i < width * height; i++) {
-        uint32_t pixel = data[i];
-
-        uint8_t r = (pixel >> 16) & 0xFF >> 5; // Scale to 3-bit
-        uint8_t g = (pixel >> 8) & 0xFF >> 6; // Scale to 2-bit
-        uint8_t b = pixel & 0xFF >> 6; // Scale to 2-bit
-
-        img_buffer[i] = (r << 5) | (g << 2) | (b << 0); // RGB332 format
-    }
+// Helper: clamp to 0..255
+static inline unsigned char clamp255(int v) {
+    if (v < 0) return 0;
+    if (v > 255) return 255;
+    return (unsigned char)v;
 }
 
-void image_grayscale(void) {
-    for (uint32_t i = 0; i < img_width * img_height; i++) {
-        uint32_t pixel = img_buffer[i];
-
-        uint8_t r = (pixel >> 5) & 0x07;
-        uint8_t g = (pixel >> 2) & 0x07;
-        uint8_t b = pixel & 0x03;
-
-        uint8_t gray = (r*30 + g*59 + b*11) / 100; // Weighted average
-        img_buffer[i] = (gray << 5) | (gray << 2) | (gray >> 1);
-    }
+// Get pixel with border replicate
+static inline unsigned char pixel_at(const unsigned char img[RES_Y][RES_X], int y, int x) {
+    if (y < 0) y = 0;
+    if (y >= RES_Y) y = RES_Y - 1;
+    if (x < 0) x = 0;
+    if (x >= RES_X) x = RES_X - 1;
+    return img[y][x];
 }
 
-void image_invert(void) {
-    for (uint32_t i = 0; i < img_width * img_height; i++) {
-        uint32_t pixel = img_buffer[i];
-
-        uint8_t r = (pixel >> 5) & 0x07;
-        uint8_t g = (pixel >> 2) & 0x07;
-        uint8_t b = pixel & 0x03;
-
-        r = 7 - r; // Invert Red
-        g = 7 - g; // Invert Green
-        b = 3 - b; // Invert Blue
-
-        img_buffer[i] = (r << 5) | (g << 2) | (b << 0);
-    }
+// Write to dst at (y,x)
+static inline void dst_write(volatile unsigned char *dst, int y, int x, unsigned char v) {
+    dst[y * RES_X + x] = v;
 }
 
-void image_mirror(void) {
-    for (uint32_t y = 0; y < img_height; y++) {
-        for (uint32_t x = 0; x < img_width / 2; x++) {
-            uint32_t left_index = y * img_width + x;
-            uint32_t right_index = y * img_width + (img_width - 1 - x);
-
-            uint32_t temp = img_buffer[left_index];
-            img_buffer[left_index] = img_buffer[right_index];
-            img_buffer[right_index] = temp;
+/* 1) Invert: simple */
+void ip_invert(const unsigned char src[RES_Y][RES_X], volatile unsigned char *dst) {
+    if (!dst) return;
+    for (int y = 0; y < RES_Y; ++y) {
+        for (int x = 0; x < RES_X; ++x) {
+            unsigned char s = src[y][x];
+            dst_write(dst, y, x, (unsigned char)(255 - s));
         }
     }
 }
 
-void image_draw(void) {
-    VGA_DMA_BUFFER = (uint32_t)img_buffer;
-    VGA_DMA_RESOLUTION = (img_height << 16) | img_width; // Y | X
-
-    /*from PIL import Image
-
-    # Load sprite (original size, no resize here, but you can resize if needed)
-    img = Image.open("background.bmp").convert("RGB")
-    width, height = img.size  # e.g., 100x53
-
-    with open("background.h", "w") as f:
-
-        f.write("const unsigned char tool_open[RES_Y][RES_X] = {\n")
-
-        for y in range(height):
-            row = []
-            for x in range(width):
-                r, g, b = img.getpixel((x, y))
-                # Skip transparent color check here (we'll handle in C)
-                r3 = r >> 5
-                g3 = g >> 5
-                b2 = b >> 6
-                pixel = (r3 << 5) | (g3 << 2) | b2
-                row.append(str(pixel))
-            f.write("    {" + ", ".join(row) + "},\n")
-
-        f.write("};\n\n")
-        f.write("#endif // smoke_H\n")
-
-    print("Header file created!") */
-
-    // Enable DMA (bit 2 = EN in your spec)
-    //VGA_DMA_STATUS |= (1 << 2);
-//}
-
-/*
-void image_swap_buffers(void) {
-    vga_swap_buffers();
+/* 2) Black & White using threshold */
+void ip_blackwhite(const unsigned char src[RES_Y][RES_X], volatile unsigned char *dst, unsigned char threshold) {
+    if (!dst) return;
+    for (int y = 0; y < RES_Y; ++y) {
+        for (int x = 0; x < RES_X; ++x) {
+            unsigned char s = src[y][x];
+            dst_write(dst, y, x, (s >= threshold) ? 255 : 0);
+        }
+    }
 }
 
+/* 3) Mirror (horizontal flip) */
+void ip_mirror(const unsigned char src[RES_Y][RES_X], volatile unsigned char *dst) {
+    if (!dst) return;
+    for (int y = 0; y < RES_Y; ++y) {
+        for (int x = 0; x < RES_X; ++x) {
+            unsigned char s = src[y][RES_X - 1 - x];
+            dst_write(dst, y, x, s);
+        }
+    }
+}
+
+/* 4) Blur 3x3 (box blur) */
+void ip_blur3x3(const unsigned char src[RES_Y][RES_X], volatile unsigned char *dst) {
+    if (!dst) return;
+    for (int y = 0; y < RES_Y; ++y) {
+        for (int x = 0; x < RES_X; ++x) {
+            int sum = 0;
+            for (int ky = -1; ky <= 1; ++ky) {
+                for (int kx = -1; kx <= 1; ++kx) {
+                    sum += pixel_at(src, y + ky, x + kx);
+                }
+            }
+            dst_write(dst, y, x, (unsigned char)(sum / 9));
+        }
+    }
+}
+
+/* 5) Sharpen 3x3 kernel:
+   0  -1  0
+  -1   5 -1
+   0  -1  0
 */
+void ip_sharpen3x3(const unsigned char src[RES_Y][RES_X], volatile unsigned char *dst) {
+    if (!dst) return;
+    for (int y = 0; y < RES_Y; ++y) {
+        for (int x = 0; x < RES_X; ++x) {
+            int center = pixel_at(src, y, x) * 5;
+            int s = center
+                    - pixel_at(src, y - 1, x)   // up
+                    - pixel_at(src, y + 1, x)   // down
+                    - pixel_at(src, y, x - 1)   // left
+                    - pixel_at(src, y, x + 1);  // right
+            dst_write(dst, y, x, clamp255(s));
+        }
+    }
+}
+
+/* 6) Sobel (edge detection) using kernels:
+   Gx =  [-1 0 1; -2 0 2; -1 0 1]
+   Gy =  [-1 -2 -1; 0 0 0; 1 2 1]
+   Magnitude approx = |Gx| + |Gy|
+*/
+void ip_sobel(const unsigned char src[RES_Y][RES_X], volatile unsigned char *dst) {
+    if (!dst) return;
+    for (int y = 0; y < RES_Y; ++y) {
+        for (int x = 0; x < RES_X; ++x) {
+            int p00 = pixel_at(src, y - 1, x - 1);
+            int p01 = pixel_at(src, y - 1, x    );
+            int p02 = pixel_at(src, y - 1, x + 1);
+            int p10 = pixel_at(src, y    , x - 1);
+            int p11 = pixel_at(src, y    , x    );
+            int p12 = pixel_at(src, y    , x + 1);
+            int p20 = pixel_at(src, y + 1, x - 1);
+            int p21 = pixel_at(src, y + 1, x    );
+            int p22 = pixel_at(src, y + 1, x + 1);
+
+            int gx = -p00 + p02 - 2 * p10 + 2 * p12 - p20 + p22;
+            int gy = -p00 - 2 * p01 - p02 + p20 + 2 * p21 + p22;
+
+            int mag = ( (gx < 0) ? -gx : gx ) + ( (gy < 0) ? -gy : gy );
+            // normalize: maximum possible mag for 8-bit input is 4*255 + 4*255 = 2040,
+            // but using clamp to 255 works; we scale down by dividing by 8 to keep contrast reasonable
+            mag = mag / 8;
+            dst_write(dst, y, x, clamp255(mag));
+        }
+    }
+}
