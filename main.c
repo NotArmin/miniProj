@@ -144,11 +144,6 @@ extern volatile unsigned char * const BUF0;
 extern volatile unsigned char * const BUF1;
 extern volatile unsigned int  * const VGA_CTRL_PTR;
 
-void delay_loop(volatile int n) {
-    for (volatile int i = 0; i < n; i++) {
-        asm volatile ("nop");
-    }
-}
 
 int main(void) {
   
@@ -160,40 +155,44 @@ int main(void) {
   *(VGA_CTRL_PTR + 1) = (unsigned int) BUF0;
   *(VGA_CTRL_PTR + 0) = 0;
 
-  delay_loop(10000000);
+  delay(1000);
 
   // 1) invert
   ip_invert(Bliss, BUF0);
   vga_swap_buffers();
-  delay_loop(10000000);
+  delay(1000);
 
   // 2) black & white threshold 128
   ip_blackwhite(Bliss, BUF0, 128);
   vga_swap_buffers();
-  delay_loop(10000000);
+  delay(1000);
+
+  ip_blackwhite(test1, BUF0, 128);
+  vga_swap_buffers();
+  delay(1000);
 
   // 3) mirror
   ip_mirror(Bliss, BUF0);
   vga_swap_buffers();
-  delay_loop(10000000);
+  delay(1000);
 
   // 4) sobel
   ip_sobel(Bliss, BUF0);
   vga_swap_buffers();
-  delay_loop(10000000);
+  delay(1000);
 
   // 5) sharpen
   ip_sharpen3x3(Bliss, BUF0);
   vga_swap_buffers();
-  delay_loop(10000000);
+  delay(1000);
 
   // 6) blur
   ip_blur3x3(Bliss, BUF0);
   vga_swap_buffers();
-  delay_loop(10000000);
+  delay(1000);
 
   // loop forever (or add button logic)
   while (1) {
-    delay_loop(1000000);
+    delay(1000);
   }
 }

@@ -16,7 +16,7 @@ void vga_swap_buffers(void) {
 void draw_background(volatile unsigned char *vram) {
     for (int y = 0; y < RES_Y; y++) {
         for (int x = 0; x < RES_X; x++) {
-            vram[y * RES_X + x] = Bliss[y][x];
+            vram[y * RES_X + x] = test1[y][x];
         }
     }
 }
