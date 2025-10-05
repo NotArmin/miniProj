@@ -143,9 +143,19 @@ void labinit(void)
 extern volatile unsigned char * const BUF0;
 extern volatile unsigned char * const BUF1;
 extern volatile unsigned int  * const VGA_CTRL_PTR;
-
+extern void simulate_run_through(void);
 
 int main(void) {
+  vga_init();
+  simulate_run_through();
+  while (1) {
+    delay(1000);
+    // infinite loop at end of program
+  }
+}
+
+
+/*int main(void) {
   
   vga_init();
 
@@ -164,10 +174,6 @@ int main(void) {
 
   // 2) black & white threshold 128
   ip_blackwhite(Bliss, BUF0, 128);
-  vga_swap_buffers();
-  delay(1000);
-
-  ip_blackwhite(test1, BUF0, 128);
   vga_swap_buffers();
   delay(1000);
 
@@ -195,4 +201,4 @@ int main(void) {
   while (1) {
     delay(1000);
   }
-}
+}*/
