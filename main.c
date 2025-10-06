@@ -11,6 +11,7 @@
 #include "image_processing.h"
 #include "background.h"
 #include "vga.h"
+#include "ui_state.h"
 
 
 extern void print(const char*);
@@ -24,10 +25,15 @@ extern void tick(int*);
 extern void delay(int);
 extern int nextprime( int );
 
-int mytime = 0x235957;
+int mytime = 0x000000; // initial time: 00:00:00
 char textstring[] = "text, more text, and even more text!";
 int timecount = 0;
-int prime = 1234567;
+int sw_prev = 0; // previous switch state
+
+typedef struct background{
+  char name;
+  int options;
+} background;
 
 const int segment_map[10] = {
   0x3F, // 0 00111111
@@ -85,7 +91,7 @@ void handle_interrupt(unsigned cause)
 {
   volatile unsigned short *TMR1_STATUS = (unsigned short*) 0x04000020;
 
-  if(*TMR1_STATUS & 0x1){
+  /*if(*TMR1_STATUS & 0x1){
     *TMR1_STATUS = 0x0;
     time2string( textstring, mytime ); // Converts mytime to string
 
@@ -102,11 +108,30 @@ void handle_interrupt(unsigned cause)
         tick( &mytime );     // Ticks the clock once
         timecount = 0;
       }
+  }*/
+
+  volatile unsigned int *btn1_interrupt = (unsigned int *) 0x040000Dc;
+  if (*btn1_interrupt & 0x1) {
+    *btn1_interrupt = 0x1; // clear interrupt
+    // go "down" the options list
+    // probably something like "arrow_idx = (arrow_idx + 1) % num_options;" in real code
+    // needs classes for backgrounds with options and arrow position
   }
+
+  volatile unsigned int *sw_interrupt = (unsigned int *) 0x0400001c;
+  if ((*sw_interrupt & 0x1) == sw_prev) { // if switch state changed
+    *sw_interrupt = 0x1; // clear interrupt
+    sw_prev = ~sw_prev; // invert previous state
+    // enter option based on arrow position
+    // needs classes for backgrounds with options and arrow position
+  }
+
+  handle_interrupt_ui(cause);
+
 }
 
 /* Add your code here for initializing interrupts. */
-void labinit(void)
+void interrupt_init(void)
 {
   //initialize control register
   volatile unsigned short *TMR1_CONTROL = (unsigned short*) 0x04000024;
@@ -136,6 +161,13 @@ void labinit(void)
   *TMR1_CONTROL = 0x7;
   // *TMR1_CONTROL = 0x5; without continuous
 
+  // enable interrupt for KEY1 (btn1)
+  volatile unsigned int *BTN1_interrupt = (unsigned int *) 0x040000D8;
+  *BTN1_interrupt = 0x1; // enable interrupt for btn1 only
+
+  volatile unsigned int *sw_interrupt = (unsigned int *) 0x04000018;
+  *sw_interrupt = 0x1; // enable interrupt for switch 1 only
+
   enable_interrupt();
 
 }
@@ -147,10 +179,12 @@ extern void simulate_run_through(void);
 
 int main(void) {
   vga_init();
-  simulate_run_through();
+
+  ui_draw_initial(); // show MainBackground with arrow at Upload
+  interrupt_init_ui();
   while (1) {
+    process_ui_events();
     delay(1000);
-    // infinite loop at end of program
   }
 }
 

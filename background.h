@@ -4,9 +4,11 @@
 
 extern const unsigned char test1[RES_Y][RES_X];
 extern const unsigned char Bliss[RES_Y][RES_X];
-extern const unsigned char arrowSprite[50][50];
-extern const unsigned char MainBackgroundMenu[RES_Y][RES_X];
-extern const unsigned char MainBackground[RES_Y][RES_X];
+extern const unsigned char KTH[RES_Y][RES_X];
+extern const unsigned char Icecream[RES_Y][RES_X];
+
+extern const unsigned char arrowSprite[20][20];
+extern const unsigned char mainMenu[RES_Y][RES_X];
 extern const unsigned char ProcessMenu[RES_Y][RES_X];
 extern const unsigned char UploadMenu[RES_Y][RES_X];
 

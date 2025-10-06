@@ -5,16 +5,16 @@
 #include "dtekv-lib.h"
 #include "vga.h"
 #include "image_processing.h"
-#include "background.h"   // contains the background declarations (MainBackground, etc.)
+#include "background.h"   // contains the background declarations (mainMenu, etc.)
 #include <string.h>       // for memcpy
 
 // external arrays (adjust if names/qualifiers differ)
-extern const unsigned char MainBackground[RES_Y][RES_X];
+extern const unsigned char mainMenu[RES_Y][RES_X];
 extern const unsigned char UploadMenu[RES_Y][RES_X];
 extern const unsigned char ProcessMenu[RES_Y][RES_X];
 
-#define ARW_W 50
-#define ARW_H 50
+#define ARW_W 20
+#define ARW_H 20
 extern const unsigned char arrowSprite[ARW_H][ARW_W];
 
 // VGA framebuffers (from your vga.c)
@@ -32,11 +32,12 @@ static void copy_image_to_current(const unsigned char src[RES_Y][RES_X]) {
         current_image[y][x] = src[y][x];
 }
 
+/*
 static void copy_current_to_image(unsigned char dst[RES_Y][RES_X]) {
     for (int y=0;y<RES_Y;y++)
       for (int x=0;x<RES_X;x++)
         dst[y][x] = current_image[y][x];
-}
+}*/
 
 // draw a background array into a VGA buffer
 static void draw_bg_to_vram(const unsigned char bg[RES_Y][RES_X], volatile unsigned char *vram) {
@@ -46,13 +47,13 @@ static void draw_bg_to_vram(const unsigned char bg[RES_Y][RES_X], volatile unsig
 }
 
 // draw full background to both buffers and show
-static void show_background(const unsigned char bg[RES_Y][RES_X]) {
+/*static void show_background(const unsigned char bg[RES_Y][RES_X]) {
     draw_bg_to_vram(bg, BUF0);
     draw_bg_to_vram(bg, BUF1);
     *(VGA_CTRL_PTR + 1) = (unsigned int) BUF0;
     *(VGA_CTRL_PTR + 0) = 0;
     for (volatile int i=0;i<200000;i++) asm volatile ("nop");
-}
+}*/
 
 // draw arrow sprite at pixel top-left (sx,sy) over current background in vram
 // transparent rule: draw sprite pixel only if value != 0 (assumes 0 = transparent)
@@ -129,9 +130,9 @@ static const int arrow_x_left = 30;
 void simulate_run_through(void) {
     print("=== UI simulation start (Invert then Mirror) ===\n");
 
-    // 1) start at MainBackground, arrow at Upload (idx 0)
+    // 1) start at mainMenu, arrow at Upload (idx 0)
     int main_idx = 0; // 0: Upload, 1: Process, 2: Download
-    show_bg_with_arrow(MainBackground, arrow_x_left, main_option_y(main_idx));
+    show_bg_with_arrow(mainMenu, arrow_x_left, main_option_y(main_idx));
 
     // user presses KEY1 on Upload -> go to UploadMenu
     wait_for_key1_sim("User chooses Upload on Main...");
@@ -150,18 +151,18 @@ void simulate_run_through(void) {
     *(VGA_CTRL_PTR + 0) = 0;
     delay_simple(2000000);
 
-    // user presses KEY1 to select Image 2 -> copy Image2 to current_image and return to MainBackground
+    // user presses KEY1 to select Image 2 -> copy Image2 to current_image and return to mainMenu
     wait_for_key1_sim("User selects Image 2 (press KEY1)...");
-    print("Loading Image2 into current image buffer and returning to MainBackground...\n");
+    print("Loading Image2 into current image buffer and returning to mainMenu...\n");
     copy_image_to_current((const unsigned char (*)[RES_X])Bliss);
-    show_bg_with_arrow(MainBackground, arrow_x_left, main_option_y(main_idx));
+    show_bg_with_arrow(mainMenu, arrow_x_left, main_option_y(main_idx));
 
     // Now user moves arrow to Process and presses KEY1
     delay_simple(2000000);
-    restore_bg_region(BUF0, MainBackground, arrow_x_left, main_option_y(main_idx));
+    restore_bg_region(BUF0, mainMenu, arrow_x_left, main_option_y(main_idx));
     main_idx = 1; // Process
     draw_sprite(BUF0, arrow_x_left, main_option_y(main_idx));
-    draw_bg_to_vram(MainBackground, BUF1);
+    draw_bg_to_vram(mainMenu, BUF1);
     draw_sprite(BUF1, arrow_x_left, main_option_y(main_idx));
     *(VGA_CTRL_PTR + 1) = (unsigned int) BUF0;
     *(VGA_CTRL_PTR + 0) = 0;
@@ -243,15 +244,15 @@ void simulate_run_through(void) {
     }
     proc_idx = 6;
     wait_for_key1_sim("User selects 'Return' (press KEY1)...");
-    print("Returning to MainBackground...\n");
+    print("Returning to mainMenu...\n");
     main_idx = 0; // keep arrow on Upload by default
-    show_bg_with_arrow(MainBackground, arrow_x_left, main_option_y(main_idx));
+    show_bg_with_arrow(mainMenu, arrow_x_left, main_option_y(main_idx));
 
     // Now user wants to Download (overwrite Image2). Move arrow to Download (idx 2)
     for (int i=0;i<2;i++) {
-        restore_bg_region(BUF0, MainBackground, arrow_x_left, main_option_y(main_idx));
+        restore_bg_region(BUF0, mainMenu, arrow_x_left, main_option_y(main_idx));
         main_idx++;
-        draw_bg_to_vram(MainBackground, BUF1);
+        draw_bg_to_vram(mainMenu, BUF1);
         draw_sprite(BUF1, arrow_x_left, main_option_y(main_idx));
         draw_sprite(BUF0, arrow_x_left, main_option_y(main_idx));
         *(VGA_CTRL_PTR + 1) = (unsigned int) BUF0;
@@ -261,7 +262,7 @@ void simulate_run_through(void) {
 
     wait_for_key1_sim("User selects 'Download' (press KEY1)...");
     print("Overwriting Image2 with current image (Download)...\n");
-    copy_current_to_image(Bliss);
+    copy_image_to_current(Bliss);
 
     // show confirmation: draw current_image to screen momentarily
     print("Showing current image (downloaded to Image2) for confirmation...\n");
