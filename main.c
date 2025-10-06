@@ -109,25 +109,21 @@ void handle_interrupt(unsigned cause)
         timecount = 0;
       }
   }*/
-
-  volatile unsigned int *btn1_interrupt = (unsigned int *) 0x040000Dc;
-  if (*btn1_interrupt & 0x1) {
-    *btn1_interrupt = 0x1; // clear interrupt
-    // go "down" the options list
-    // probably something like "arrow_idx = (arrow_idx + 1) % num_options;" in real code
-    // needs classes for backgrounds with options and arrow position
+  volatile unsigned int *btn1_int_flag = (unsigned int *)0x040000DC;
+  if (*btn1_int_flag & 0x1) {
+      *btn1_int_flag = 0x1; // clear interrupt
+      ui_flag_move_down();
   }
 
-  volatile unsigned int *sw_interrupt = (unsigned int *) 0x0400001c;
-  if ((*sw_interrupt & 0x1) == sw_prev) { // if switch state changed
-    *sw_interrupt = 0x1; // clear interrupt
-    sw_prev = ~sw_prev; // invert previous state
-    // enter option based on arrow position
-    // needs classes for backgrounds with options and arrow position
+  volatile unsigned int *sw_int_flag = (unsigned int *)0x04000020; // Timer/interrupt status
+  volatile unsigned int *sw_value = (unsigned int *)0x0400001C;    // Switch value
+  if (*sw_int_flag & 0x1) { // If interrupt flag for switch is set
+      *sw_int_flag = 0x1;   // clear interrupt
+      if (*sw_value & 0x1)  // Only act if switch is ON
+        ui_flag_enter();
   }
-
+  
   handle_interrupt_ui(cause);
-
 }
 
 /* Add your code here for initializing interrupts. */
@@ -181,7 +177,7 @@ int main(void) {
   vga_init();
 
   ui_draw_initial(); // show MainBackground with arrow at Upload
-  interrupt_init_ui();
+  interrupt_init();
   while (1) {
     process_ui_events();
     delay(1000);

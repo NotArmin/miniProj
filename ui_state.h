@@ -23,5 +23,7 @@ void interrupt_init_ui(void);              // initialize IRQs for UI
 void handle_interrupt_ui(unsigned cause);  // call from your global IRQ handler
 void process_ui_events(void);              // run in main loop to process flags
 void ui_draw_initial(void);                // draw initial menu to screen
+void ui_flag_move_down(void);
+void ui_flag_enter(void);
 
 #endif // UI_STATE_H

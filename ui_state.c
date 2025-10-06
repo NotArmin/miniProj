@@ -70,10 +70,10 @@ static void draw_arrow_on_vram(volatile unsigned char *vram, int sx, int sy) {
 }
 
 static void restore_region_from_bg(volatile unsigned char *vram, const unsigned char bg[RES_Y][RES_X], int sx, int sy) {
-    for (int ry = 0; ry < 50; ++ry) {
+    for (int ry = 0; ry < 20; ++ry) {
         int y = sy + ry;
         if (y < 0 || y >= RES_Y) continue;
-        for (int rx = 0; rx < 50; ++rx) {
+        for (int rx = 0; rx < 20; ++rx) {
             int x = sx + rx;
             if (x < 0 || x >= RES_X) continue;
             vram[y * RES_X + x] = bg[y][x];
@@ -82,11 +82,11 @@ static void restore_region_from_bg(volatile unsigned char *vram, const unsigned 
 }
 
 /* pixel positions (tweak to match your bitmaps) */
-static int main_option_y(int idx)    { return 100 + idx * 20; }
-static int upload_option_y(int idx)  { return 80 + idx * 20; }
-static int process_option_y(int idx) { return 60 + idx * 10; }
+static int main_option_y(int idx)    { return 100 + idx * 40; }
+static int upload_option_y(int idx)  { return 80 + idx * 40; }
+static int process_option_y(int idx) { return 60 + idx * 30; }
 
-static const int arrow_x_left = 20;
+static const int arrow_x_left = 0;
 
 /* load selected image into working buffer */
 static void load_selected_image(void) {
@@ -167,6 +167,14 @@ void interrupt_init_ui(void)
     enable_interrupt();
 }
 
+void ui_flag_move_down(void) {
+    flag_move_down = 1;
+}
+
+void ui_flag_enter(void) {
+    flag_enter = 1;
+}
+
 /* ---------- INTERRUPT HANDLER (minimal) ----------
    KEY1 moves arrow down, SW0 change acts as ENTER.
 */
@@ -188,6 +196,7 @@ void handle_interrupt_ui(unsigned cause)
 }
 
 /* ---------- PROCESS EVENTS (call from main loop) ---------- */
+static int showing_image = 0;
 void process_ui_events(void)
 {
     if (flag_move_down) {
@@ -249,14 +258,21 @@ void process_ui_events(void)
                 render_current_menu();
             }
         } else if (current_bg == BG_PROCESS) {
-            if (arrow_idx >= 0 && arrow_idx <= 5) {
+            if (showing_image) {
+                // if showing processed image, any enter returns to menu
+                showing_image = 0;
+                render_current_menu();
+            }
+            else if (arrow_idx >= 0 && arrow_idx <= 5) {
                 apply_process_and_show(arrow_idx);
                 // copy back into current_image (2D indexing properly)
-                for (int y=0;y<RES_Y;y++)
-                    for (int x=0;x<RES_X;x++)
+                for (int y=0;y<RES_Y;y++){
+                    for (int x=0;x<RES_X;x++){
                         current_image[y][x] = BUF0[y*RES_X + x];
-                render_current_menu();
-            } else if (arrow_idx == 6) { // Return
+                    }
+                }
+                showing_image = 1;
+                } else if (arrow_idx == 6) { // Return
                 current_bg = BG_MAIN;
                 arrow_idx = 0;
                 render_current_menu();
