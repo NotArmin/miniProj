@@ -1,11 +1,4 @@
-/* main.c
-
-   This file written 2024 by Artur Podobas and Pedro Antunes
-
-   For copyright and licensing, see file COPYING */
-
-
-/* Below functions are external and found in other files. */
+// main.c
 
 #include "dtekv-lib.h"
 #include "image_processing.h"
@@ -28,12 +21,6 @@ extern int nextprime( int );
 int mytime = 0x000000; // initial time: 00:00:00
 char textstring[] = "text, more text, and even more text!";
 int timecount = 0;
-int sw_prev = 0; // previous switch state
-
-typedef struct background{
-  char name;
-  int options;
-} background;
 
 const int segment_map[10] = {
   0x3F, // 0 00111111
@@ -49,26 +36,12 @@ const int segment_map[10] = {
 };
 
 /* Function to turn LED's on or off*/
-// WORKS
 void set_leds(int led_mask) {
   volatile int *leds = (volatile int *)0x04000000; // address of the LED's
   *leds = led_mask & 0x3FF; // 0x3FF = 001111111111, only care about the 10 lsb
 }
-/* Function to increment the 4 first LED's */
-// WORKS
-void increment_leds() {
-  int led_value = 0;
-  set_leds(led_value); 
 
-  while (led_value < 0xF) { // run until led_value = 1111 (0xF)
-    delay (1000); // change value to get accurate seconds
-    led_value++;
-    set_leds(led_value);
-  }
-}
 /* Function to set a value to a desired display */
-// DOES NOT WORK, error probably in row 42 how bits are treated
-// 7segment works on passive high logic, meaning 0 = active
 void set_displays (int display_number, int value) {
   volatile int *display = (volatile int *)0x04000050 + (display_number * 0x4);
   *display = ~segment_map[value] & 0xFF; // 0xFF = 11111111, 7 lsb
@@ -89,9 +62,11 @@ int get_btn (void) {
 /* Below is the function that will be called when an interrupt is triggered. */
 void handle_interrupt(unsigned cause) 
 {
+  /* Timer interrupt handling below
   volatile unsigned short *TMR1_STATUS = (unsigned short*) 0x04000020;
 
-  /*if(*TMR1_STATUS & 0x1){
+  // code which displays ticking time on the 7-segment display
+  if(*TMR1_STATUS & 0x1){
     *TMR1_STATUS = 0x0;
     time2string( textstring, mytime ); // Converts mytime to string
 
@@ -108,25 +83,13 @@ void handle_interrupt(unsigned cause)
         tick( &mytime );     // Ticks the clock once
         timecount = 0;
       }
-  }*/
-  volatile unsigned int *btn1_int_flag = (unsigned int *)0x040000DC;
-  if (*btn1_int_flag & 0x1) {
-      *btn1_int_flag = 0x1; // clear interrupt
-      ui_flag_move_down();
   }
-
-  volatile unsigned int *sw_int_flag = (unsigned int *)0x04000020; // Timer/interrupt status
-  volatile unsigned int *sw_value = (unsigned int *)0x0400001C;    // Switch value
-  if (*sw_int_flag & 0x1) { // If interrupt flag for switch is set
-      *sw_int_flag = 0x1;   // clear interrupt
-      if (*sw_value & 0x1)  // Only act if switch is ON
-        ui_flag_enter();
-  }
+  */
   
   handle_interrupt_ui(cause);
 }
 
-/* Add your code here for initializing interrupts. */
+/* Function for initializing interrupts. */
 void interrupt_init(void)
 {
   //initialize control register
@@ -177,7 +140,7 @@ int main(void) {
   vga_init();
 
   ui_draw_initial(); // show MainBackground with arrow at Upload
-  interrupt_init();
+  interrupt_init_ui();
   while (1) {
     process_ui_events();
     delay(1000);
@@ -185,7 +148,8 @@ int main(void) {
 }
 
 
-/*int main(void) {
+/* Old main for testing image processing functions only
+int main(void) {
   
   vga_init();
 

@@ -1,3 +1,5 @@
+// boot.S
+
 .data
 .align 2
 welcome_msg: .asciz "================================================\n===== RISC-V Boot-Up Process Now Complete ======\n================================================\n"
@@ -126,6 +128,7 @@ _start:
 	
 enable_interrupt:
 	csrsi mie, 16
+	csrsi mie, 17
 	csrsi mie, 18
 	csrsi mstatus, 3
 	

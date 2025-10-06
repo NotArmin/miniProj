@@ -1,7 +1,4 @@
 # timetemplate.S
-# Written 2015 by F Lundevall
-# Modified 2024 by A Eghtesadi
-#############################################################
 	.data
 	.align 2
 mytime:	.word 	0x5957

@@ -1,3 +1,5 @@
+// image_processing.h
+
 #ifndef IMAGEPROC_H
 #define IMAGEPROC_H
 
