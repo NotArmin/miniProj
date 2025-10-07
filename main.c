@@ -1,11 +1,11 @@
 // main.c
 
 #include "dtekv-lib.h"
+#include "vga.h"
 #include "image_processing.h"
 #include "background.h"
-#include "vga.h"
 #include "ui_state.h"
-
+#include "performance_analysis.h"
 
 extern void print(const char*);
 extern void printc(char);
@@ -65,10 +65,19 @@ void handle_interrupt(unsigned cause)
   handle_interrupt_ui(cause);
 }
 
+void *memcpy(void *dest, const void *src, unsigned int n) {
+    unsigned char *d = (unsigned char *)dest;
+    const unsigned char *s = (const unsigned char *)src;
+    for (unsigned int i = 0; i < n; i++)
+        d[i] = s[i];
+    return dest;
+}
+
 extern volatile unsigned char * const BUF0;
 extern volatile unsigned char * const BUF1;
 extern volatile unsigned int  * const VGA_CTRL_PTR;
 
+/* Normal launch
 int main(void) {
   vga_init();
 
@@ -79,53 +88,33 @@ int main(void) {
     delay(1000);
   }
 }
+*/
 
-
-/* Old main for testing image processing functions only
+// Launch with performance tests
 int main(void) {
-  
   vga_init();
+  ui_draw_initial();
+  interrupt_init_ui();
+  
+#ifdef RUN_PERFORMANCE_TESTS
+  // Performance test mode
+  print("=== PERFORMANCE TEST MODE ===\n");
+  test_filter_performance("Grayscale", ip_grayscale);
+  test_filter_performance("Black & White", ip_blackwhite);
+  test_filter_performance("Invert", ip_invert);
+  test_filter_performance("Mirror", ip_mirror);
+  test_filter_performance("Blur 3x3", ip_blur3x3);
+  test_filter_performance("Sharpen 3x3", ip_sharpen3x3);
+  test_filter_performance("Sobel", ip_sobel);
+  print("=== TESTS COMPLETE ===\n");
+  print("Now entering normal UI mode...\n");
 
-  // draw original Bliss first
-  draw_background(BUF0);
-  draw_background(BUF1);
-  *(VGA_CTRL_PTR + 1) = (unsigned int) BUF0;
-  *(VGA_CTRL_PTR + 0) = 0;
+  ui_draw_initial(); // Return to main menu
+#endif
 
-  delay(1000);
-
-  // 1) invert
-  ip_invert(Bliss, BUF0);
-  vga_swap_buffers();
-  delay(1000);
-
-  // 2) black & white threshold 128
-  ip_blackwhite(Bliss, BUF0, 128);
-  vga_swap_buffers();
-  delay(1000);
-
-  // 3) mirror
-  ip_mirror(Bliss, BUF0);
-  vga_swap_buffers();
-  delay(1000);
-
-  // 4) sobel
-  ip_sobel(Bliss, BUF0);
-  vga_swap_buffers();
-  delay(1000);
-
-  // 5) sharpen
-  ip_sharpen3x3(Bliss, BUF0);
-  vga_swap_buffers();
-  delay(1000);
-
-  // 6) blur
-  ip_blur3x3(Bliss, BUF0);
-  vga_swap_buffers();
-  delay(1000);
-
-  // loop forever (or add button logic)
+  // Normal UI operation (always runs)
   while (1) {
-    delay(1000);
+    process_ui_events();
+    delay(100);
   }
-}*/
+}

@@ -11,7 +11,7 @@
 // If dst==NULL the function does nothing.
 
 void ip_grayscale(const unsigned char src[RES_Y][RES_X], volatile unsigned char *dst);
-void ip_blackwhite(const unsigned char src[RES_Y][RES_X], volatile unsigned char *dst, unsigned char threshold);
+void ip_blackwhite(const unsigned char src[RES_Y][RES_X], volatile unsigned char *dst);
 void ip_invert(const unsigned char src[RES_Y][RES_X], volatile unsigned char *dst);
 void ip_mirror(const unsigned char src[RES_Y][RES_X], volatile unsigned char *dst);
 void ip_blur3x3(const unsigned char src[RES_Y][RES_X], volatile unsigned char *dst);

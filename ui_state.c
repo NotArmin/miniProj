@@ -5,7 +5,9 @@
 #include "vga.h"
 #include "image_processing.h"
 #include "background.h"
-#include <string.h>
+#include "performance_analysis.h"
+
+#include <stdint.h>
 
 /* Hardware register addresses */
 #define BTN1_INT_EN_ADDR   ((volatile unsigned int *) 0x040000D8)
@@ -108,7 +110,7 @@ static int main_option_x(int idx)    { return 40; } // Always left-aligned
 
 /* load selected image into working buffer */
 static void load_selected_image(void) {
-    unsigned char (*src)[RES_X] = NULL;
+    unsigned char (*src)[RES_X] = ( (void*)0 ); // ( (void*)0 ) is NULL pointer
     switch (selected_image_index) {
         case 1: src = (unsigned char (*)[RES_X])Bliss; break;
         case 2: src = (unsigned char (*)[RES_X])KTH; break;
@@ -128,7 +130,7 @@ static void draw_current_image_to_vram(volatile unsigned char *vram) {
 }
 
 static void copy_current_to_imageN(void) {
-    unsigned char (*dst)[RES_X] = NULL;
+    unsigned char (*dst)[RES_X] = ( (void*)0 ); // ( (void*)0 ) is NULL pointer
     switch (selected_image_index) {
         case 1: dst = (unsigned char (*)[RES_X])Bliss; break;
         case 2: dst = (unsigned char (*)[RES_X])KTH; break;
@@ -159,9 +161,49 @@ static void render_current_menu(void) {
 }
 
 static void apply_process_and_show(int option_idx) {
+    const char* filter_names[] = {
+        "Grayscale", "Black & White", "Invert", "Mirror", 
+        "Blur 3x3", "Sharpen 3x3", "Sobel"
+    };
+    
+    // Only run performance analysis if we have a valid filter
+    if (option_idx >= 0 && option_idx <= 6) {
+        before_perf();
+    }
+    
+    // Apply the filter
+    switch (option_idx) {
+        case 0: ip_blackwhite(current_image, BUF0); break;
+        case 1: ip_invert(current_image, BUF0); break;
+        case 2: ip_mirror(current_image, BUF0); break;
+        case 3: ip_blur3x3(current_image, BUF0); break;
+        case 4: ip_sharpen3x3(current_image, BUF0); break;
+        case 5: ip_sobel(current_image, BUF0); break;
+        default: return;
+    }
+    
+    // Display the result
+    *(VGA_CTRL_PTR + 1) = (unsigned int)BUF0;
+    *(VGA_CTRL_PTR + 0) = 0;
+    
+    // Copy back into current_image for filter stacking
+    for (int y=0;y<RES_Y;y++) {
+        for (int x=0;x<RES_X;x++) {
+            current_image[y][x] = BUF0[y*RES_X + x];
+        }
+    }
+    
+    // Run performance analysis after filter application
+    if (option_idx >= 0 && option_idx <= 6) {
+        present_data(filter_names[option_idx]);
+    }
+}
+
+/*
+static void apply_process_and_show(int option_idx) {
     switch (option_idx) {
         case 0: ip_grayscale(current_image, BUF0); break;
-        case 1: ip_blackwhite(current_image, BUF0, 128); break;
+        case 1: ip_blackwhite(current_image, BUF0); break;
         case 2: ip_invert(current_image, BUF0); break;
         case 3: ip_mirror(current_image, BUF0); break;
         case 4: ip_blur3x3(current_image, BUF0); break;
@@ -172,6 +214,7 @@ static void apply_process_and_show(int option_idx) {
     *(VGA_CTRL_PTR + 1) = (unsigned int) BUF0;
     *(VGA_CTRL_PTR + 0) = 0;
 }
+*/
 
 /* Only updates arrow, not entire screen */
 static void update_arrow_position(int new_idx) {
@@ -234,7 +277,7 @@ void handle_interrupt_ui(unsigned cause) {
     if ((*BTN1_INT_STAT_ADDR & 0x1) != 0) {
         *BTN1_INT_STAT_ADDR = 0x0;  // clear flag
         flag_move_down = 1;
-        print("KEY1 Interrupt\n");
+        // print("KEY1 Interrupt\n");
     }
 
     // Switch interrupt  
@@ -243,7 +286,7 @@ void handle_interrupt_ui(unsigned cause) {
         unsigned int cur = (*SW_BASE) & 0x1;
         if (cur != sw_prev && cur == 1) { // Only on switch ON transition
             flag_enter = 1;
-            print("SW0 Interrupt\n");
+            // print("SW0 Interrupt\n");
         }
         sw_prev = cur;
     }

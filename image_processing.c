@@ -1,7 +1,7 @@
 // image_processing.c
 
 #include "image_processing.h"
-#include <stdint.h>
+#include "dtekv-lib.h"
 
 // Helper: clamp to 0..255. Prevents arithmetic overflow/underflow in pixel operations.
 // Essential for filters that can produce values outside the valid color range.
@@ -81,15 +81,15 @@ void ip_grayscale(const unsigned char src[RES_Y][RES_X], volatile unsigned char 
 
 /* 2) Black & White using threshold
  * Converts image to binary black/white based on brightness threshold
- * Pixel >= threshold becomes white (255), otherwise black (0)
+ * Pixel >= 128 becomes white (255), otherwise black (0)
  * Uses the overall pixel brightness, not individual color channels
  */
-void ip_blackwhite(const unsigned char src[RES_Y][RES_X], volatile unsigned char *dst, unsigned char threshold) {
+void ip_blackwhite(const unsigned char src[RES_Y][RES_X], volatile unsigned char *dst) {
     if (!dst) return;
     for (int y = 0; y < RES_Y; ++y) {
         for (int x = 0; x < RES_X; ++x) {
             unsigned char s = src[y][x];
-            dst_write(dst, y, x, (s >= threshold) ? 255 : 0);
+            dst_write(dst, y, x, (s >= 128) ? 255 : 0);
         }
     }
 }

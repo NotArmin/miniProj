@@ -5,7 +5,7 @@ OBJECTS ?= $(addsuffix .o, $(basename $(notdir $(SOURCES))))
 LINKER ?= $(SRC_DIR)/dtekv-script.lds
 
 TOOLCHAIN ?= riscv32-unknown-elf-
-CFLAGS ?= -Wall -nostdlib -O3 -mabi=ilp32 -march=rv32imzicsr -fno-builtin
+CFLAGS ?= -Wall -nostdlib -O0 -mabi=ilp32 -march=rv32imzicsr -DRUN_PERFORMANCE_TESTS
 
 
 build: clean main.bin
