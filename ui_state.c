@@ -63,7 +63,7 @@ static void draw_arrow_on_vram(volatile unsigned char *vram, int sx, int sy) {
         for (int rx = 0; rx < 20; ++rx) {
             int x = sx + rx;
             if (x < 0 || x >= RES_X) continue;
-            unsigned char s = arrowSprite[ry][rx];
+            unsigned char s = handSprite[ry][rx];
             if (s != 0) vram[y * RES_X + x] = s;
         }
     }
@@ -82,11 +82,28 @@ static void restore_region_from_bg(volatile unsigned char *vram, const unsigned 
 }
 
 /* pixel positions */
-static int main_option_y(int idx)    { return 100 + idx * 40; }
-static int upload_option_y(int idx)  { return 80 + idx * 40; }
-static int process_option_y(int idx) { return 60 + idx * 30; }
+static int main_option_y(int idx)    { return 80 + idx * 40; }
+static int upload_option_y(int idx)  { 
+    if (idx == 3) return 200;  // Special position for Return button
+    return 70 + idx * 45;      // Normal menu items
+}
+static int process_option_y(int idx) { 
+    if (idx == 7) return 200;  // Special position for Return button  
+    return 40 + idx * 25;      // Normal menu items
+}
 
-static const int arrow_x_left = 0;
+/* Arrow X positions - Return button needs different X too */
+static int upload_option_x(int idx) {
+    if (idx == 3) return 170;  // Special X for Return button
+    return 20;                  // Normal left-aligned for menu items
+}
+
+static int process_option_x(int idx) {
+    if (idx == 7) return 170;  // Special X for Return button
+    return 20;                  // Normal left-aligned for menu items
+}
+
+static int main_option_x(int idx)    { return 40; } // Always left-aligned
 
 
 /* load selected image into working buffer */
@@ -127,52 +144,53 @@ static void copy_current_to_imageN(void) {
 static void render_current_menu(void) {
     switch (current_bg) {
         case BG_MAIN:
-            show_background_now(mainMenu);
-            draw_arrow_on_vram(BUF0, arrow_x_left, main_option_y(arrow_idx));
+            show_background_now(mainMenuStyle);
+            draw_arrow_on_vram(BUF0, main_option_x(arrow_idx), main_option_y(arrow_idx));
             break;
         case BG_UPLOAD:
-            show_background_now(UploadMenu);
-            draw_arrow_on_vram(BUF0, arrow_x_left, upload_option_y(arrow_idx));
+            show_background_now(uploadMenuStyle);
+            draw_arrow_on_vram(BUF0, upload_option_x(arrow_idx), upload_option_y(arrow_idx));
             break;
         case BG_PROCESS:
-            show_background_now(ProcessMenu);
-            draw_arrow_on_vram(BUF0, arrow_x_left, process_option_y(arrow_idx));
+            show_background_now(processMenuStyle);
+            draw_arrow_on_vram(BUF0, process_option_x(arrow_idx), process_option_y(arrow_idx));
             break;
     }
 }
 
 static void apply_process_and_show(int option_idx) {
     switch (option_idx) {
-        case 0: ip_blackwhite(current_image, BUF0, 128); break;
-        case 1: ip_invert(current_image, BUF0); break;
-        case 2: ip_mirror(current_image, BUF0); break;
-        case 3: ip_blur3x3(current_image, BUF0); break;
-        case 4: ip_sharpen3x3(current_image, BUF0); break;
-        case 5: ip_sobel(current_image, BUF0); break;
+        case 0: ip_grayscale(current_image, BUF0); break;
+        case 1: ip_blackwhite(current_image, BUF0, 128); break;
+        case 2: ip_invert(current_image, BUF0); break;
+        case 3: ip_mirror(current_image, BUF0); break;
+        case 4: ip_blur3x3(current_image, BUF0); break;
+        case 5: ip_sharpen3x3(current_image, BUF0); break;
+        case 6: ip_sobel(current_image, BUF0); break;
         default: return;
     }
     *(VGA_CTRL_PTR + 1) = (unsigned int) BUF0;
     *(VGA_CTRL_PTR + 0) = 0;
 }
 
-/* Only update arrow position */
+/* Only updates arrow, not entire screen */
 static void update_arrow_position(int new_idx) {
     int old_idx = arrow_idx;
     arrow_idx = new_idx;
     
-    // Only redraw the regions that changed
+    // Only redraw the pixels that changed
     switch (current_bg) {
         case BG_MAIN:
-            restore_region_from_bg(BUF0, mainMenu, arrow_x_left, main_option_y(old_idx));
-            draw_arrow_on_vram(BUF0, arrow_x_left, main_option_y(arrow_idx));
+            restore_region_from_bg(BUF0, mainMenuStyle, main_option_x(old_idx), main_option_y(old_idx));
+            draw_arrow_on_vram(BUF0, main_option_x(arrow_idx), main_option_y(arrow_idx));
             break;
         case BG_UPLOAD:
-            restore_region_from_bg(BUF0, UploadMenu, arrow_x_left, upload_option_y(old_idx));
-            draw_arrow_on_vram(BUF0, arrow_x_left, upload_option_y(arrow_idx));
+            restore_region_from_bg(BUF0, uploadMenuStyle, upload_option_x(old_idx), upload_option_y(old_idx));
+            draw_arrow_on_vram(BUF0, upload_option_x(arrow_idx), upload_option_y(arrow_idx));
             break;
         case BG_PROCESS:
-            restore_region_from_bg(BUF0, ProcessMenu, arrow_x_left, process_option_y(old_idx));
-            draw_arrow_on_vram(BUF0, arrow_x_left, process_option_y(arrow_idx));
+            restore_region_from_bg(BUF0, processMenuStyle, process_option_x(old_idx), process_option_y(old_idx));
+            draw_arrow_on_vram(BUF0, process_option_x(arrow_idx), process_option_y(arrow_idx));
             break;
     }
     
@@ -186,7 +204,7 @@ static int get_max_index(void) {
     switch (current_bg) {
         case BG_MAIN: return 2;
         case BG_UPLOAD: return 3; 
-        case BG_PROCESS: return 6;
+        case BG_PROCESS: return 7;
         default: return 0;
     }
 }
@@ -293,7 +311,7 @@ void process_ui_events(void) {
                 render_current_menu();
             }
         } else if (current_bg == BG_PROCESS) {
-            if (arrow_idx >= 0 && arrow_idx <= 5) {
+            if (arrow_idx >= 0 && arrow_idx <= 6) {
                 apply_process_and_show(arrow_idx);
                 // Copy result back for filter stacking
                 for (int y=0;y<RES_Y;y++) {
@@ -302,7 +320,7 @@ void process_ui_events(void) {
                     }
                 }
                 current_state = STATE_VIEWING_IMAGE;
-            } else if (arrow_idx == 6) { // Return
+            } else if (arrow_idx == 7) { // Return
                 current_bg = BG_MAIN;
                 arrow_idx = 0;
                 render_current_menu();

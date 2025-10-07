@@ -22,24 +22,22 @@ static inline unsigned char pixel_at(const unsigned char img[RES_Y][RES_X], int 
     return img[y][x];
 }
 
-// Extract color components from RRRGGBB pixel
-// Our color format: 8 bits = RRRGGGBB (3 red, 3 green, 2 blue bits)
+// Extract color components from RRRGGBB pixel (3-2-2 format)
 static inline unsigned char get_red(unsigned char pixel) {
-    return (pixel >> 5) & 0x7;    // Extract bits 7-5: 3 bits (0-7)
+    return (pixel >> 5) & 0x7;    // 3 bits: 0-7
 }
 
 static inline unsigned char get_green(unsigned char pixel) {
-    return (pixel >> 2) & 0x7;    // Extract bits 4-2: 3 bits (0-7)
+    return (pixel >> 3) & 0x3;    // 2 bits: 0-3 
 }
 
 static inline unsigned char get_blue(unsigned char pixel) {
-    return pixel & 0x3;           // Extract bits 1-0: 2 bits (0-3)
+    return (pixel >> 1) & 0x3;    // 2 bits: 0-3 
 }
 
-// Combine components back to RRRGGBB format
-// Reconstructs the 8-bit pixel from separate color channels
+// Combine components back to RRRGGBB format (3-2-2)
 static inline unsigned char make_rgb(unsigned char r, unsigned char g, unsigned char b) {
-    return ((r & 0x7) << 5) | ((g & 0x7) << 2) | (b & 0x3);
+    return ((r & 0x7) << 5) | ((g & 0x3) << 3) | ((b & 0x3) << 1);
 }
 
 // Write to destination framebuffer at (y,x)
@@ -49,24 +47,34 @@ static inline void dst_write(volatile unsigned char *dst, int y, int x, unsigned
 }
 
 /* 1) Grayscale Conversion - Simpler version
- * Uses average of R,G,B channels (faster but less accurate)
- * Good enough for many applications
+ * Uses weighted average of R,G,B channels 
  */
 void ip_grayscale(const unsigned char src[RES_Y][RES_X], volatile unsigned char *dst) {
     if (!dst) return;
     for (int y = 0; y < RES_Y; ++y) {
         for (int x = 0; x < RES_X; ++x) {
-            unsigned char pixel = src[y][x];
+
+            unsigned char r = get_red(pixel_at(src, y, x));
+            unsigned char g = get_green(pixel_at(src, y, x));
+            unsigned char b = get_blue(pixel_at(src, y, x));
             
-            unsigned char r = get_red(pixel);
-            unsigned char g = get_green(pixel);
-            unsigned char b = get_blue(pixel);
+            // Scale green and blue to match red's range (0-7)
+            // Green: 0-3 → 0-6 (multiply by 2)
+            // Blue: 0-3 → 0-6 (multiply by 2)
+            int g_scaled = g * 2;
+            int b_scaled = b * 2;
             
-            // Simple average of color channels
-            unsigned char gray = (r + g + b) / 3;
+            // Weighted average (you can adjust weights)
+            int gray = (r + g_scaled + b_scaled) / 3;
             
-            // Use same value for all channels
-            dst_write(dst, y, x, make_rgb(gray, gray, gray));
+            // Ensure in 0-7 range
+            if (gray > 7) gray = 7;
+            
+            // Convert back to output channels
+            unsigned char out_g = gray >> 1;  // 0-7 → 0-3
+            unsigned char out_b = gray >> 1;  // 0-7 → 0-3
+            
+            dst_write(dst, y, x, make_rgb(gray, out_g, out_b));
         }
     }
 }
