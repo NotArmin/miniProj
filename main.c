@@ -61,80 +61,13 @@ int get_btn (void) {
 
 /* Below is the function that will be called when an interrupt is triggered. */
 void handle_interrupt(unsigned cause) 
-{
-  /* Timer interrupt handling below
-  volatile unsigned short *TMR1_STATUS = (unsigned short*) 0x04000020;
-
-  // code which displays ticking time on the 7-segment display
-  if(*TMR1_STATUS & 0x1){
-    *TMR1_STATUS = 0x0;
-    time2string( textstring, mytime ); // Converts mytime to string
-
-    set_displays(0, (int)textstring[7] - '0'); // ones of seconds
-    set_displays(1, (int)textstring[6] - '0'); // tens of seconds
-    set_displays(2, (int)textstring[4] - '0'); // ones of minutes
-    set_displays(3, (int)textstring[3] - '0'); // tens of minutes
-    set_displays(4, (int)textstring[1] - '0'); // ones of hours
-    set_displays(5, (int)textstring[0] - '0'); // tens of hours
-
-    display_string( textstring ); //Print out the string 'textstring'
-    timecount++;
-    if (timecount >= 10){
-        tick( &mytime );     // Ticks the clock once
-        timecount = 0;
-      }
-  }
-  */
-  
+{  
   handle_interrupt_ui(cause);
-}
-
-/* Function for initializing interrupts. */
-void interrupt_init(void)
-{
-  //initialize control register
-  volatile unsigned short *TMR1_CONTROL = (unsigned short*) 0x04000024;
-
-  // intitialize the time period to be 100 ms 
-  // that gives us a period of 1/1000
-  volatile unsigned short *TMR1_PERLO = (unsigned short*)  0x04000028;
-  volatile unsigned short *TMR1_PERHI = (unsigned short*)  0x0400002c;
-
-
-  // 10 timeout per sec
-  // clock rate of 30 000 000 clock cycles per second means 30 MHz
-  // but we want 10 Hz
-
-  unsigned int period = (30000000/10) - 1; // we do minus 1 bcz the timers actual period is one cycle greater than that store in the registers, assumes we start from 0..., not 1...
-
-  *(TMR1_PERLO) = period & 0xFFFF;
-  *(TMR1_PERHI) = period >> 16;                          
-  
-  
-  /*
-    set control bits to do the following:
-    - Start timer (bit 0 = 1)
-    - Be continuous. allows timer to reload automatically after reach zero
-    - Enable ITO (bit 2 = 1), this enables timeout flags which we want!   
-  */
-  *TMR1_CONTROL = 0x7;
-  // *TMR1_CONTROL = 0x5; without continuous
-
-  // enable interrupt for KEY1 (btn1)
-  volatile unsigned int *BTN1_interrupt = (unsigned int *) 0x040000D8;
-  *BTN1_interrupt = 0x1; // enable interrupt for btn1 only
-
-  volatile unsigned int *sw_interrupt = (unsigned int *) 0x04000018;
-  *sw_interrupt = 0x1; // enable interrupt for switch 1 only
-
-  enable_interrupt();
-
 }
 
 extern volatile unsigned char * const BUF0;
 extern volatile unsigned char * const BUF1;
 extern volatile unsigned int  * const VGA_CTRL_PTR;
-extern void simulate_run_through(void);
 
 int main(void) {
   vga_init();

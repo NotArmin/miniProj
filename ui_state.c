@@ -12,7 +12,7 @@
 #define BTN1_INT_STAT_ADDR ((volatile unsigned int *) 0x040000DC)
 #define SW_INT_EN_ADDR     ((volatile unsigned int *) 0x04000018)
 #define SW_INT_STAT_ADDR   ((volatile unsigned int *) 0x0400001C)
-#define SW_BASE            ((volatile unsigned int *) 0x04000010)  // switch register (bit 0)
+#define SW_BASE            ((volatile unsigned int *) 0x04000010)  // switch values (bit 0)
 
 /* Externs from other modules */
 extern volatile unsigned char * const BUF0;
@@ -208,8 +208,8 @@ void ui_flag_enter(void) {
     flag_enter = 1; 
 }
 
-/* ---------- INTERRUPT HANDLER (minimal) ----------
-   KEY1 moves arrow down, SW0 change acts as ENTER.
+/* ---------- INTERRUPT HANDLER  ----------
+   KEY1 moves arrow down, SW0 UP acts as ENTER.
 */
 void handle_interrupt_ui(unsigned cause) {
     // Button interrupt
