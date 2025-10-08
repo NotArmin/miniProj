@@ -7,7 +7,6 @@
 #include "background.h"
 #include "performance_analysis.h"
 
-#include <stdint.h>
 
 /* Hardware register addresses */
 #define BTN1_INT_EN_ADDR   ((volatile unsigned int *) 0x040000D8)
@@ -159,7 +158,8 @@ static void render_current_menu(void) {
             break;
     }
 }
-
+/*
+// With performance analysis
 static void apply_process_and_show(int option_idx) {
     const char* filter_names[] = {
         "Grayscale", "Black & White", "Invert", "Mirror", 
@@ -173,12 +173,13 @@ static void apply_process_and_show(int option_idx) {
     
     // Apply the filter
     switch (option_idx) {
-        case 0: ip_blackwhite(current_image, BUF0); break;
-        case 1: ip_invert(current_image, BUF0); break;
-        case 2: ip_mirror(current_image, BUF0); break;
-        case 3: ip_blur3x3(current_image, BUF0); break;
-        case 4: ip_sharpen3x3(current_image, BUF0); break;
-        case 5: ip_sobel(current_image, BUF0); break;
+        case 0: ip_grayscale(current_image, BUF0); break;
+        case 1: ip_blackwhite(current_image, BUF0); break;
+        case 2: ip_invert(current_image, BUF0); break;
+        case 3: ip_mirror(current_image, BUF0); break;
+        case 4: ip_blur3x3(current_image, BUF0); break;
+        case 5: ip_sharpen3x3(current_image, BUF0); break;
+        case 6: ip_sobel(current_image, BUF0); break;
         default: return;
     }
     
@@ -198,8 +199,9 @@ static void apply_process_and_show(int option_idx) {
         present_data(filter_names[option_idx]);
     }
 }
+*/
 
-/*
+// Normal version without performance analysis
 static void apply_process_and_show(int option_idx) {
     switch (option_idx) {
         case 0: ip_grayscale(current_image, BUF0); break;
@@ -214,7 +216,7 @@ static void apply_process_and_show(int option_idx) {
     *(VGA_CTRL_PTR + 1) = (unsigned int) BUF0;
     *(VGA_CTRL_PTR + 0) = 0;
 }
-*/
+
 
 /* Only updates arrow, not entire screen */
 static void update_arrow_position(int new_idx) {
