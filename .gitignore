@@ -2,7 +2,7 @@
 *.o
 *.elf
 *.bin
-*.txt
+
 
 # Ignore temporary files
 *.swp
