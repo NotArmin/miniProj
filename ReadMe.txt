@@ -1,9 +1,9 @@
 Image Processing program
-
+-----------------------------------------------------------------------------------------------
 Designed to run on a RISC-V DE10-Lite FPGA from a Windows 10+ host PC with WSL and Ubuntu 24.04
-
+-----------------------------------------------------------------------------------------------
 Requirements:
-
+--------------
 - WSL enabled and Ubuntu installed (use "sudo apt update" and "sudo apt upgrade" in Ubuntu terminal)
 
 - Requires the official RISC-V GNU Toolchain: git clone https://github.com/riscv/riscv-gnu-toolchain
@@ -24,7 +24,7 @@ Save and restart your system
 - Requires JTAG software: https://www.intel.com/content/www/us/en/software-kit/795187/intel-quartus-prime-lite-edition-design-software-version-23-1-for-linux.html
 In "Additional Files" download "Intel® Quartus® Prime Programmer and Tools 23.1std.0.991"
 Add the JTAG-Daemon to your path variable 
-
+-----------------------------------------------------------------------------------------------
 How to start the program:
 1. Connect your DE10-Lite FPGA to your PC via USB and connect your monitor via VGA
 2. Start PowerShell as admin, Win+X -> Windows PowerShell (admin)
@@ -44,6 +44,7 @@ How to start the program:
         The DE10-Lite often loses connection between program runs because it is quite bad.
         Use "jtagconfig" to check connection and repeat steps 8-9a as necessary.
 
+-----------------------------------------------------------------------------------------------
 How to use the program:
 When starting the program, the user will be immediately shown the main menu on the User Interface.
 Use the button "KEY1" to move the pointer down one step (it loops around). 
@@ -72,3 +73,13 @@ From here, the user may choose a new image to upload to the program and repeat p
 The user can access their first processed image after having downloaded it at any time through the upload menu.
 
 Quitting the program by pressing KEY0 will restore all images to their original state and reset all processes.
+
+-----------------------------------------------------------------------------------------------
+How to run performance checks:
+To run performance checks, enter the "Makefile" and add "-DRUN-PERFORMANCE-TESTS" at the end of CFLAGS
+Also, navigate to the function "apply_process_and_show" in "ui_state.c". There are two versions of the function,
+the above version is for performance checks and below is without performance checks. Comment out whichever 
+version you do not want. 
+Also, the program normally runs on -O3 compiler optimization. To change the compiler optimization, navigate to the
+Makefile and at CFLAGS, change the "-O3" to "-O0" or "-O2" or whichever level of optimization you want.
+NOTE: to compile without any optimization (-O0), also remove the "-fno-builtin" from CFLAGS
